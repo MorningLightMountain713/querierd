@@ -20,7 +20,7 @@
 # along with QuerierD.  If not, see <http://www.gnu.org/licenses/>.
 
 from . import Querier
-from typing import List
+from typing import List, Optional
 import threading
 import time
 import sys
@@ -60,7 +60,7 @@ def private_addresses_for_interface(interface: str) -> List[str]:
 
 
 def ip4_addresses(
-    all_interfaces: bool = False, interface: str | None = None
+    all_interfaces: bool = False, interface: Optional[str] = None
 ) -> List[str]:
 
     if all_interfaces:
