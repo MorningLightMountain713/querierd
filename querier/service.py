@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+# Copyright© 2023 by David White.
 # Copyright© 2016 by Alexander Roessler.
 # Based on the work of Mark Culler and others.
 # This file is part of QuerierD.
@@ -24,65 +25,114 @@ import time
 import sys
 import argparse
 import os
-from netifaces import interfaces, ifaddresses, AF_INET
+import ipaddress
+import netifaces
 
 
 class QuerierInstance:
-    def __init__(self, address, interval):
+    def __init__(self, address: str, interval: int) -> None:
         self.address = address
         self.interval = interval
         self.querier = Querier(address, interval)
         self.thread = thread = threading.Thread(target=self.run)
         thread.start()
 
-    def run(self):
+    def run(self) -> None:
         self.querier.run()
 
-    def stop(self):
+    def stop(self) -> None:
         self.querier.stop.set()
 
 
-def ip4_addresses():
-    ip_list = []
-    for interface in interfaces():
-        if interface == 'lo':
-            continue
-        addresses = ifaddresses(interface)
-        if AF_INET in addresses:
-            for link in addresses[AF_INET]:
-                ip_list.append(link['addr'])
-    return ip_list
+def private_addresses_for_interface(interface: str) -> list[str]:
+    ips = []
+    addresses = netifaces.ifaddresses(interface)
+
+    if not netifaces.AF_INET in addresses:
+        return ips
+
+    for link in addresses[netifaces.AF_INET]:
+        if ipaddress.ip_address(link["addr"]).is_private:
+            ips.append(link["addr"])
+
+    return ips
 
 
-def main():
-    parser = argparse.ArgumentParser(description='Querierd queries the multicast group in a certain interval to prevent IGMP snooping')
-    parser.add_argument('-i', '--interval', help='IGMP query interval', default=60.0)
-    parser.add_argument('-d', '--debug', help='Enable debug mode', action='store_true')
+def ip4_addresses(
+    all_interfaces: bool = False, interface: str | None = None
+) -> list[str]:
+
+    if all_interfaces:
+        ifaces = netifaces.interfaces()
+        addresses = [
+            addy
+            for iface in ifaces
+            for addy in private_addresses_for_interface(iface)
+            if not iface == "lo"
+        ]
+    elif interface:
+        addresses = private_addresses_for_interface(interface)
+    else:  # use gateway
+        gws = netifaces.gateways()
+        try:
+            upstream_inteface = gws["default"][netifaces.AF_INET][1]
+        except ValueError:
+            addresses = []
+        else:
+            addresses = private_addresses_for_interface(upstream_inteface)
+
+    return addresses
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Querierd queries the multicast group in a certain interval to"
+            " prevent IGMP snooping"
+        )
+    )
+    parser.add_argument(
+        "-i", "--interval", help="IGMP query interval", default=60.0
+    )
+    parser.add_argument(
+        "-f", "--interface", help="IGMP query interface", default=None
+    )
+    parser.add_argument(
+        "-a",
+        "--all-interfaces",
+        help="Run on all interfaces, instead of default route",
+        action="store_true",
+    )
+    parser.add_argument(
+        "-d", "--debug", help="Enable debug mode", action="store_true"
+    )
     args = parser.parse_args()
 
     if os.getuid() != 0:
-        print 'You must be root to run a querier.'
+        print("You must be root to run a querier.")
         sys.exit(1)
 
     debug = args.debug
     interval = args.interval
+    interface = args.interface
+    all_interfaces = args.interface
     wait = 5.0  # network interface checking interval
     processes = {}
 
     try:
         while True:
-            addresses = ip4_addresses()
+            addresses = ip4_addresses(all_interfaces, interface)
             for address in addresses:
                 if address not in processes:
                     if debug:
-                        print('adding new querier: %s' % address)
+                        print("adding new querier: %s" % address)
                     processes[address] = QuerierInstance(address, interval)
 
             removed = []
             for proc in processes:
                 if proc not in addresses:
                     if debug:
-                        print('stopping querier: %s' % proc)
+                        print("stopping querier: %s" % proc)
                     processes[proc].stop()
                     removed.append(proc)
             for proc in removed:
@@ -104,6 +154,7 @@ def main():
     if debug:
         print("threads stopped")
     sys.exit(0)
+
 
 if __name__ == "__main__":
     main()
