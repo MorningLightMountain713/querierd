@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 # Copyright© 2023 by David White.
@@ -20,6 +20,7 @@
 # along with QuerierD.  If not, see <http://www.gnu.org/licenses/>.
 
 from . import Querier
+from typing import List
 import threading
 import time
 import sys
@@ -44,7 +45,7 @@ class QuerierInstance:
         self.querier.stop.set()
 
 
-def private_addresses_for_interface(interface: str) -> list[str]:
+def private_addresses_for_interface(interface: str) -> List[str]:
     ips = []
     addresses = netifaces.ifaddresses(interface)
 
@@ -60,7 +61,7 @@ def private_addresses_for_interface(interface: str) -> list[str]:
 
 def ip4_addresses(
     all_interfaces: bool = False, interface: str | None = None
-) -> list[str]:
+) -> List[str]:
 
     if all_interfaces:
         ifaces = netifaces.interfaces()

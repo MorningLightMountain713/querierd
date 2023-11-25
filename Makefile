@@ -3,7 +3,7 @@ all:
 
 install_module:
 	@echo "Installing Python module"
-	python setup.py install --record files.txt
+	python3 setup.py install --record files.txt
 
 install_service:
 	@echo "Installing QuerierD service"
