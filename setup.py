@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name="querierd",
-    version=0.5,
+    version=0.6,
     description="IGMP querier service",
     author="David White",
     author_email="dr.white.nz@gmail.com",
