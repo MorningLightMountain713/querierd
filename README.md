@@ -1,40 +1,18 @@
-# Why avahi and bonjour don't work on your home network
+# The problem
 
-## and how to fix them
-
-An internet search turns up lots and lots of reports of problems with
-avahi and bonjour of the following general nature: "when I first start
-up my XXX device / service it works fine; all the devices can see it.
-But after a certain time, XXX disappears.  Other devices cannot see
-it."  A typical example is
-[Bug #657553](http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=657553)
-which remains unresolved as of January 2014.
-
-
-
-When the avahi developers respond to these complaints, they usually
-say it is not their fault and refer the plaintiff to
-[FAQ #15](http://avahi.org/wiki/Avah4users#FAQ) which says
-
-  "you most likely are experiencing trouble with a broken network
-  driver or WLAN AP, which doesn't properly support IP multicasting."
-
-Well, great.  But what can be done about it?
+"When I first start up my XXX device / service it works fine; all the
+devices can see it. But after a certain time, XXX disappears.  Other
+devices cannot see it."
 
 ## What is going on?
 
-To explain the problem we need a little background on IP multicasting
+To explain the problem we need a little background on IP multicast
 and IGMP snooping.
 
-Multicasting was designed for delivering high-bandwidth data streams,
-TV in other words, across a network without overloading the network.
-If an internet TV station had to send its video stream to each
-subscriber individually, the outgoing network link from the station
-would have to carry many, many identical data streams.  There is no
-way that they could possibly get enough bandwidth.  And anyway it is
-silly to send many copies of the same stream.
+Multicast was designed for delivering high-bandwidth data streams,
+across a network without overloading the network.
 
-Multicasting avoids this problem by providing a way for a single
+Multicast avoids this problem by providing a way for a single
 stream to be delivered to many subscribers.  The outgoing stream is
 directed to a single multicast address belonging to a "multicast
 group".  When a router receives the packets of such a stream on an
@@ -75,28 +53,12 @@ a device subscribes to a multicast group it must renew its membership
 before the timeout expires; otherwise the switch will mark it as not
 belonging to the group and stop sending it packets for that group.
 
-But, you ask, what does this have to do with avahi or bonjour?  Well,
-it turns out that those protocols also use multicasting.  There is a
-multicast group for mDNS (the address is 224.0.0.251).  All of the
-communication related to avahi or bonjour uses multicast packets sent
-to this multicast group.
-
-So now we see the problem.  The avahi or bonjour daemon on your device
-joins the mDNS multicast group when it starts up.  But it is not the
-job of the avahi-daemon to ensure that your device remains a member of
-the mDNS group.  That job is supposed to be handled automatically by
-the switches and routers on your network, using IGMP.  The reason your
-device disappears after a while is that a switch, probably your WAP,
-does not hear any subsequent IGMP join requests from your device.  So,
-after a while, the switch stops forwarding any mDNS packets, and the
-device "disappears".
-
 ## What can be done?
 
 To understand how to deal with this we need to discuss one more
 feature of the IGMP protocol and IGMP snooping.  In order for your
-device to remain a member of the mDNS group, it needs to periodically
-send a request (actually called a *report* in IGMP) to join the mDNS
+device to remain a member of a mcast group, it needs to periodically
+send a request (actually called a *report* in IGMP) to join the mcast
 group before the switch decides to remove it from the group.  As
 explained in the Wikipedia page, the IGMP protocol deals with this by
 requiring that each network have a router which functions as an "IGMP
@@ -111,7 +73,7 @@ reports requesting to join all groups that it wants to belong to.
 
 Unfortunately, however, many cheap home network routers like the ones
 that you and I buy do not provide an IGMP querier.  That is the reason
-that avahi and bonjour do not work on your home network.
+that some UPnP services do not work on your home network.
 
 The good news is that this problem is easy to fix.  All we need to do
 is run a little daemon on one device which sends an IGMP query to the
@@ -127,6 +89,13 @@ one of them will provide the querier service at a time.
 
 NOTE: A C implementation with similar functionality is available
 from Daniel Lorch: [igmp-querier](https://github.com/dlorch/igmp-querier)
+
+## Debian package
+
+Check out the releases page for a pre-built Debian package. Aimed at
+ubuntu 20.04 and 22.04. Download the `.deb` and install with:
+
+    sudo apt install ./querierd-<version>.deb
 
 ## Easy install
 To simplify the installation a Makefile is provided with QuerierD. To
@@ -193,7 +162,15 @@ you can run tcpdump and watch the IGMP traffic:
 
 (replace eth0 by the appropriate interface on your computer).
 
-Also, you can run avahi-browse to check that all of your devices and
-services are visible:
+## Bridge testing
 
-    $ avahi-browse -at
+    $ watch bridge -d -s mdb show
+
+```
+Every 2.0s: bridge -d -s mdb show          hypervisor: Sun Nov 26 19:59:26 2023
+
+dev vmbr0 port tap100i0 grp 239.255.255.250 temp proto kernel   225.42
+dev vmbr2 port tap109i0 grp 239.255.255.250 temp proto kernel   223.97
+router ports on vmbr0: tap101i0  219.78 temp
+router ports on vmbr2: tap110i0  208.79 temp
+```
