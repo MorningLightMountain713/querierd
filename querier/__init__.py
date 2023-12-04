@@ -38,12 +38,13 @@ class Querier:
     Sends an IGMP query packet at a specified time interval (in seconds).
     """
 
-    def __init__(self, source_address: str, interval: int):
+    def __init__(self, source_address: str, interval: int, version: int = 2):
         if os.getuid() != 0:
             raise RuntimeError("You must be root to create a Querier.")
 
         self.source_address = source_address
         self.interval = interval
+        self.version = version
         self.socket = sock = socket.socket(
             socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_RAW
         )
@@ -60,8 +61,9 @@ class Querier:
     def build_query_packet(self) -> None:
         igmp = IGMPv2Packet()
         igmp.type = "query"
-        # max_response_time should be 0 for a v1 query
-        # igmp.max_response_time = 100
+        # max_response_time should be 0 for a v1 query. (1= 0.1s, 10 = 1s, 100 = 10s)
+        if self.version == 2:
+            igmp.max_response_time = 100
 
         self.packet = ip = IPv4Packet()
         ip.protocol = socket.IPPROTO_IGMP

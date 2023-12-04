@@ -107,6 +107,9 @@ def main() -> None:
     parser.add_argument(
         "-d", "--debug", help="Enable debug mode", action="store_true"
     )
+    parser.add_argument(
+        "-v", "--version", help="IGMP Version (1 or 2)", default=2
+    )
     args = parser.parse_args()
 
     if os.getuid() != 0:
@@ -117,6 +120,7 @@ def main() -> None:
     interval = args.interval
     interface = args.interface
     all_interfaces = args.interface
+    version = args.version
     wait = 5.0  # network interface checking interval
     processes = {}
 
@@ -127,7 +131,9 @@ def main() -> None:
                 if address not in processes:
                     if debug:
                         print("adding new querier: %s" % address)
-                    processes[address] = QuerierInstance(address, interval)
+                    processes[address] = QuerierInstance(
+                        address, interval, version
+                    )
 
             removed = []
             for proc in processes:

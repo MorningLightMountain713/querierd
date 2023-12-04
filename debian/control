@@ -1,0 +1,19 @@
+Source: querierd
+Section: devel
+Priority: optional
+Maintainer: David White <dr.white.nz@gmail.com>
+Build-Depends: debhelper-compat (= 12),
+               dh-python,
+               python-all,
+               python-setuptools,
+               python3-all
+Standards-Version: 4.5.0
+Homepage: https://github.com/MorningLightMountain713/querierd
+X-Python3-Version: >= 3.8
+
+Package: querierd
+Architecture: all
+Multi-Arch: foreign
+Depends: ${misc:Depends}, ${python3:Depends}
+Description: IGMP Querier for IGMP networks without
+  a multicast router
