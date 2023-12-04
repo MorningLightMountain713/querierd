@@ -31,10 +31,11 @@ import netifaces
 
 
 class QuerierInstance:
-    def __init__(self, address: str, interval: int) -> None:
+    def __init__(self, address: str, interval: int, version: int = 2) -> None:
         self.address = address
         self.interval = interval
-        self.querier = Querier(address, interval)
+        self.version = version
+        self.querier = Querier(address, interval, version)
         self.thread = thread = threading.Thread(target=self.run)
         thread.start()
 
