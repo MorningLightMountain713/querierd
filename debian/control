@@ -4,8 +4,6 @@ Priority: optional
 Maintainer: David White <dr.white.nz@gmail.com>
 Build-Depends: debhelper-compat (= 12),
                dh-python,
-               python-all,
-               python-setuptools,
                python3-all
 Standards-Version: 4.5.0
 Homepage: https://github.com/MorningLightMountain713/querierd
