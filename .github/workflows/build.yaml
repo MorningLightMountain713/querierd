@@ -31,22 +31,16 @@ jobs:
       - name: Install tools
         run: sudo apt update && sudo apt install python3.11 debmake dh-python python3-all cmake  python3-setuptools debhelper-compat -y
 
-      # - name: Link Python
-      #   run: ln -s /usr/bin/python3.11 /usr/bin/python
-
       - name: Run Make
-        run: cd ${GITHUB_WORKSPACE}/REPO && debmake -d -b':python3' -e dr.white.nz@gmail.com -f 'David White'
-
-      - name: Check current DIR
-        run: pwd
+        run: cd REPO && debmake -d -b':python3' -e dr.white.nz@gmail.com -f 'David White'
 
       - name: Build Package
-        run: cd ${GITHUB_WORKSPACE}/${{ env.GITHUB_REPO_NAME }}-${{ env.VERSION }} && debmake
+        run: cd ${{ env.GITHUB_REPO_NAME }}-${{ env.VERSION }} && debmake
 
       - name: Confirm builds complete
-        run: sudo apt install ${GITHUB_WORKSPACE}/${{ env.GITHUB_REPO_NAME }}_${{ env.VERSION }}-1_all.deb
+        run: sudo apt install ${{ env.GITHUB_REPO_NAME }}_${{ env.VERSION }}-1_all.deb
 
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: ${GITHUB_WORKSPACE}/${{ env.GITHUB_REPO_NAME }}_${{ env.VERSION }}-1_all.deb
+          files: ${{ env.GITHUB_REPO_NAME }}_${{ env.VERSION }}-1_all.deb
