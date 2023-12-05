@@ -41,7 +41,7 @@ jobs:
         run: cd ${{ env.GITHUB_REPO_NAME }}-${{ env.VERSION }} && debuild
 
       - name: Confirm builds complete
-        run: sudo apt install ${{ env.GITHUB_REPO_NAME }}_${{ env.VERSION }}-1_all.deb
+        run: sudo apt install ./${{ env.GITHUB_REPO_NAME }}_${{ env.VERSION }}-1_all.deb
 
       - name: Release
         uses: softprops/action-gh-release@v1
