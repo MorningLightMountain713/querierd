@@ -38,7 +38,7 @@ jobs:
         run: cd REPO && debmake -d -b':python3' -e dr.white.nz@gmail.com -f 'David White'
 
       - name: Build Package
-        run: cd ${{ env.GITHUB_REPO_NAME }}-${{ env.VERSION }} && debmake
+        run: cd ${{ env.GITHUB_REPO_NAME }}-${{ env.VERSION }} && debuild
 
       - name: Confirm builds complete
         run: sudo apt install ${{ env.GITHUB_REPO_NAME }}_${{ env.VERSION }}-1_all.deb
