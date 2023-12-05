@@ -1,0 +1,43 @@
+name: Run the Release
+
+permissions:
+  contents: write
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Create Package
+    runs-on: 3.11-bookworm
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          path: "REPO"
+
+      - name: Create variables
+        run: |
+          (
+            echo "GITHUB_REPO_NAME=$(echo "${GITHUB_REPOSITORY}" | cut -d/ -f2)"
+            echo "VERSION=$(echo "${GITHUB_REF_NAME}" | sed -e 's/^v//')"
+          ) >> $GITHUB_ENV
+
+      - name: Install tools
+        run: sudo apt update && sudo apt install debmake dh-python python3-all cmake  python3-setuptools -y
+
+      - name: Run Make
+        run: cd $REPO && debmake -d -b':py3' -e dr.white.nz@gmail.com -f 'David White'
+
+      - name: Build Package
+        run: cd $REPO/${{ env.GITHUB_REPO_NAME }}-${{ env.VERSION }} && debmake
+
+      - name: Confirm builds complete
+        run: sudo apt install ./${{ env.GITHUB_REPO_NAME }}_${{ env.VERSION }}-1_all.deb
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ${{ env.GITHUB_REPO_NAME }}_${{ env.VERSION }}-1_all.deb
