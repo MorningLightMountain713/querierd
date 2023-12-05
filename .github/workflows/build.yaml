@@ -18,15 +18,15 @@ jobs:
         with:
           path: "REPO"
 
-      - name: Show variables
-        run: env
-
       - name: Create variables
         run: |
           (
             echo "GITHUB_REPO_NAME=$(echo "${GITHUB_REPOSITORY}" | cut -d/ -f2)"
             echo "VERSION=$(echo "${GITHUB_REF_NAME}" | sed -e 's/^v//')"
           ) >> $GITHUB_ENV
+
+      - name: Show variables
+        run: env
 
       - name: Install tools
         run: sudo apt update && sudo apt install python3.11 debmake dh-python python3-all cmake  python3-setuptools debhelper-compat -y
@@ -35,7 +35,10 @@ jobs:
       #   run: ln -s /usr/bin/python3.11 /usr/bin/python
 
       - name: Run Make
-        run: cd $REPO && debmake -d -b':python3' -e dr.white.nz@gmail.com -f 'David White'
+        run: cd ${GITHUB_WORKSPACE}/REPO && debmake -d -b':python3' -e dr.white.nz@gmail.com -f 'David White'
+
+      - name: Check current DIR
+        run: pwd
 
       - name: Build Package
         run: cd ${GITHUB_WORKSPACE}/${{ env.GITHUB_REPO_NAME }}-${{ env.VERSION }} && debmake
