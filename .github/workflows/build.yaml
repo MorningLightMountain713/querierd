@@ -31,8 +31,8 @@ jobs:
       - name: Install tools
         run: sudo apt update && sudo apt install python3.11 debmake dh-python python3-all cmake  python3-setuptools debhelper-compat -y
 
-      - name: Link Python
-        run: ln -s /usr/bin/python3.11 /usr/bin/python
+      # - name: Link Python
+      #   run: ln -s /usr/bin/python3.11 /usr/bin/python
 
       - name: Run Make
         run: cd $REPO && debmake -d -b':python3' -e dr.white.nz@gmail.com -f 'David White'
